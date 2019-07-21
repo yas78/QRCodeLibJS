@@ -276,7 +276,7 @@ ShiftJISCharset._charCodeMap = {
     0xFF90: 0xD0, 0xFF91: 0xD1, 0xFF92: 0xD2, 0xFF93: 0xD3, 0xFF94: 0xD4, 0xFF95: 0xD5, 0xFF96: 0xD6, 0xFF97: 0xD7,
     0xFF98: 0xD8, 0xFF99: 0xD9, 0xFF9A: 0xDA, 0xFF9B: 0xDB, 0xFF9C: 0xDC, 0xFF9D: 0xDD, 0xFF9E: 0xDE, 0xFF9F: 0xDF,
 
-    /* JIS X 0208 多重定義*/
+    /* JIS X 0208 多重定義 */
     0x2014: 0x815C, 0xFF3C: 0x815F,
     0xFF5E: 0x8160, 0x2225: 0x8161,
     0xFF0D: 0x817C,
@@ -1252,7 +1252,7 @@ UTF8Charset.prototype.getBytes = function (c) {
     //if (c.length != 1) {
     //    throw new Error("Argument error");
     //}
-    
+
     //const ret;
     //return ret;
 };
@@ -1493,7 +1493,7 @@ AlphanumericEncoder.prototype.__defineGetter__("modeIndicator", function () {
     return ModeIndicator.ALPAHNUMERIC_VALUE;
 });
 AlphanumericEncoder.prototype.append = function (c) {
-    const wd = AlphanumericEncoder.convertCharCode(c);
+    const wd = AlphanumericEncoder._convertCharCode(c);
     let ret;
 
     if (this._charCounter % 2 == 0) {
@@ -1535,7 +1535,7 @@ AlphanumericEncoder.prototype.getBytes = function () {
 
     return bs.getBytes();
 };
-AlphanumericEncoder.convertCharCode = function (c) {
+AlphanumericEncoder._convertCharCode = function (c) {
     if ("A" <= c && c <= "Z") {
         return c.charCodeAt(0) - 55;
     }
@@ -1916,8 +1916,8 @@ RSBlock.getNumberECCodewords = function (ecLevel, version) {
     const numDataCodewords = DataCodeword.getTotalNumber(ecLevel, version);
     const numRSBlocks = RSBlock._totalNumbers[ecLevel][version];
 
-    return Math.floor(Codeword.getTotalNumber(version) / numRSBlocks) -
-        Math.floor(numDataCodewords / numRSBlocks);
+    return Math.floor(Codeword.getTotalNumber(version) / numRSBlocks) 
+            - Math.floor(numDataCodewords / numRSBlocks);
 };
 // RSブロック数
 RSBlock._ecLevelL = [
@@ -2320,7 +2320,7 @@ Masking.apply = function (version, ecLevel, moduleMatrix) {
     for (let i = 0; i <= 7; i++) {
         const temp = ArrayUtil.clone2D(moduleMatrix);
 
-        Masking.mask(i, temp);
+        Masking._mask(i, temp);
         FormatInfo.place(ecLevel, i, temp);
 
         if (version >= 7) {
@@ -2347,8 +2347,8 @@ Masking.apply = function (version, ecLevel, moduleMatrix) {
  * @param {Number} maskPatternReference         マスクパターン参照子
  * @param {Array<Array<Number>>} moduleMatrix   シンボルの明暗パターン
  */
-Masking.mask = function (maskPatternReference, moduleMatrix) {
-    const condition = Masking.getCondition(maskPatternReference);
+Masking._mask = function (maskPatternReference, moduleMatrix) {
+    const condition = Masking._getCondition(maskPatternReference);
 
     for (let r = 0, rend = moduleMatrix.length; r < rend; r++) {
         for (let c = 0, cend = moduleMatrix[r].length; c < cend; c++) {
@@ -2364,7 +2364,7 @@ Masking.mask = function (maskPatternReference, moduleMatrix) {
  * マスク条件を返します。
  * @param {Number} maskPatternReference マスクパターン参照子
  */
-Masking.getCondition = function (maskPatternReference) {
+Masking._getCondition = function (maskPatternReference) {
     switch (maskPatternReference) {
         case 0:
             return function (r, c) { return (r + c) % 2 == 0; };
@@ -2394,31 +2394,31 @@ MaskingPenaltyScore.calcTotal = function (moduleMatrix) {
     let total = 0;
     let penalty;
 
-    penalty = MaskingPenaltyScore.calcAdjacentModulesInSameColor(moduleMatrix);
+    penalty = MaskingPenaltyScore._calcAdjacentModulesInSameColor(moduleMatrix);
     total += penalty;
 
-    penalty = MaskingPenaltyScore.calcBlockOfModulesInSameColor(moduleMatrix);
+    penalty = MaskingPenaltyScore._calcBlockOfModulesInSameColor(moduleMatrix);
     total += penalty;
 
-    penalty = MaskingPenaltyScore.calcModuleRatio(moduleMatrix);
+    penalty = MaskingPenaltyScore._calcModuleRatio(moduleMatrix);
     total += penalty;
 
-    penalty = MaskingPenaltyScore.calcProportionOfDarkModules(moduleMatrix);
+    penalty = MaskingPenaltyScore._calcProportionOfDarkModules(moduleMatrix);
     total += penalty;
 
     return total;
 };
 // 行／列の同色隣接モジュールパターンの失点を計算します。
-MaskingPenaltyScore.calcAdjacentModulesInSameColor = function (moduleMatrix) {
+MaskingPenaltyScore._calcAdjacentModulesInSameColor = function (moduleMatrix) {
     let penalty = 0;
 
-    penalty += MaskingPenaltyScore.calcAdjacentModulesInRowInSameColor(moduleMatrix);
-    penalty += MaskingPenaltyScore.calcAdjacentModulesInRowInSameColor(ArrayUtil.rotate90(moduleMatrix));
+    penalty += MaskingPenaltyScore._calcAdjacentModulesInRowInSameColor(moduleMatrix);
+    penalty += MaskingPenaltyScore._calcAdjacentModulesInRowInSameColor(ArrayUtil.rotate90(moduleMatrix));
 
     return penalty;
 };
 // 行の同色隣接モジュールパターンの失点を計算します。
-MaskingPenaltyScore.calcAdjacentModulesInRowInSameColor = function (moduleMatrix) {
+MaskingPenaltyScore._calcAdjacentModulesInRowInSameColor = function (moduleMatrix) {
     let penalty = 0;
 
     for (let r = 0, rend = moduleMatrix.length; r < rend; r++) {
@@ -2444,7 +2444,7 @@ MaskingPenaltyScore.calcAdjacentModulesInRowInSameColor = function (moduleMatrix
     return penalty;
 };
 // 2x2の同色モジュールパターンの失点を計算します。
-MaskingPenaltyScore.calcBlockOfModulesInSameColor = function (moduleMatrix) {
+MaskingPenaltyScore._calcBlockOfModulesInSameColor = function (moduleMatrix) {
     let penalty = 0;
 
     for (let r = 0, rend = moduleMatrix.length - 1; r < rend; r++) {
@@ -2462,22 +2462,22 @@ MaskingPenaltyScore.calcBlockOfModulesInSameColor = function (moduleMatrix) {
     return penalty;
 };
 // 行／列における1 : 1 : 3 : 1 : 1 比率パターンの失点を計算します。
-MaskingPenaltyScore.calcModuleRatio = function (moduleMatrix) {
+MaskingPenaltyScore._calcModuleRatio = function (moduleMatrix) {
     const moduleMatrixTemp = QuietZone.place(moduleMatrix);
     let penalty = 0;
 
-    penalty += MaskingPenaltyScore.calcModuleRatioInRow(moduleMatrixTemp);
-    penalty += MaskingPenaltyScore.calcModuleRatioInRow(ArrayUtil.rotate90(moduleMatrixTemp));
+    penalty += MaskingPenaltyScore._calcModuleRatioInRow(moduleMatrixTemp);
+    penalty += MaskingPenaltyScore._calcModuleRatioInRow(ArrayUtil.rotate90(moduleMatrixTemp));
 
     return penalty;
 };
 // 行の1 : 1 : 3 : 1 : 1 比率パターンの失点を計算します。
-MaskingPenaltyScore.calcModuleRatioInRow = function (moduleMatrix) {
+MaskingPenaltyScore._calcModuleRatioInRow = function (moduleMatrix) {
     let penalty = 0;
 
     for (let r = 0, rend = moduleMatrix.length; r < rend; r++) {
         const row = moduleMatrix[r];
-        const ratio3Ranges = MaskingPenaltyScore.getRatio3Ranges(row);
+        const ratio3Ranges = MaskingPenaltyScore._getRatio3Ranges(row);
 
         for (let i = 0, end = ratio3Ranges.length; i < end; i++) {
             const range = ratio3Ranges[i];
@@ -2539,7 +2539,7 @@ MaskingPenaltyScore.calcModuleRatioInRow = function (moduleMatrix) {
 
     return penalty;
 };
-MaskingPenaltyScore.getRatio3Ranges = function (arg) {
+MaskingPenaltyScore._getRatio3Ranges = function (arg) {
     const ret = [];
     let s = 0;
     let e;
@@ -2561,7 +2561,7 @@ MaskingPenaltyScore.getRatio3Ranges = function (arg) {
     return ret;
 };
 // 全体に対する暗モジュールの占める割合について失点を計算します。
-MaskingPenaltyScore.calcProportionOfDarkModules = function (moduleMatrix) {
+MaskingPenaltyScore._calcProportionOfDarkModules = function (moduleMatrix) {
     let darkCount = 0;
 
     for (let r = 0, rend = moduleMatrix.length; r < rend; r++) {
@@ -2683,7 +2683,7 @@ Symbol.prototype.tryAppend = function (c) {
             return false;
         }
 
-        this.selectVersion();
+        this._selectVersion();
     }
 
     this._currEncoder.append(c);
@@ -2711,7 +2711,7 @@ Symbol.prototype.trySetEncodingMode = function (encMode, c) {
             return false;
         }
 
-        this.selectVersion();
+        this._selectVersion();
     }
 
     this._dataBitCounter += ModeIndicator.LENGTH
@@ -2724,7 +2724,7 @@ Symbol.prototype.trySetEncodingMode = function (encMode, c) {
     return true;
 };
 // 型番を決定します。
-Symbol.prototype.selectVersion = function () {
+Symbol.prototype._selectVersion = function () {
     for (let encMode = EncodingMode.NUMERIC; encMode <= EncodingMode.KANJI; encMode++) {
         const num = this._segmentCounter[encMode];
         this._dataBitCounter +=
@@ -2741,8 +2741,8 @@ Symbol.prototype.selectVersion = function () {
     }
 };
 // データブロックを返します。
-Symbol.prototype.buildDataBlock = function () {
-    const dataBytes = this.getMessageBytes();
+Symbol.prototype._buildDataBlock = function () {
+    const dataBytes = this._getMessageBytes();
 
     const numPreBlocks = RSBlock.getTotalNumber(
         this._parent.errorCorrectionLevel, this._currVersion, true);
@@ -2775,7 +2775,7 @@ Symbol.prototype.buildDataBlock = function () {
  * 誤り訂正データ領域のブロックを生成します。
  * @param {Array<Array<Number>>} dataBlock データ領域のブロック
  */
-Symbol.prototype.buildErrorCorrectionBlock = function (dataBlock) {
+Symbol.prototype._buildErrorCorrectionBlock = function (dataBlock) {
     const numECCodewords = RSBlock.getNumberECCodewords(this._parent.errorCorrectionLevel, this._currVersion);
     const numPreBlocks = RSBlock.getTotalNumber(this._parent.errorCorrectionLevel, this._currVersion, true);
     const numFolBlocks = RSBlock.getTotalNumber(this._parent.errorCorrectionLevel, this._currVersion, false);
@@ -2820,9 +2820,9 @@ Symbol.prototype.buildErrorCorrectionBlock = function (dataBlock) {
     return ret;
 };
 // 符号化領域のバイトデータを返します。
-Symbol.prototype.getEncodingRegionBytes = function () {
-    const dataBlock = this.buildDataBlock();
-    const ecBlock = this.buildErrorCorrectionBlock(dataBlock);
+Symbol.prototype._getEncodingRegionBytes = function () {
+    const dataBlock = this._buildDataBlock();
+    const ecBlock = this._buildErrorCorrectionBlock(dataBlock);
 
     const numCodewords = Codeword.getTotalNumber(this._currVersion);
     const numDataCodewords = DataCodeword.getTotalNumber(this._parent.errorCorrectionLevel, this._currVersion);
@@ -2858,27 +2858,27 @@ Symbol.prototype.getEncodingRegionBytes = function () {
     return ret;
 };
 // コード語に変換するメッセージビット列を返します。
-Symbol.prototype.getMessageBytes = function () {
+Symbol.prototype._getMessageBytes = function () {
     const bs = new BitSequence();
 
     if (this._parent.count > 1) {
-        this.writeStructuredAppendHeader(bs);
+        this._writeStructuredAppendHeader(bs);
     }
 
-    this.writeSegments(bs);
-    this.writeTerminator(bs);
-    this.writePaddingBits(bs);
-    this.writePadCodewords(bs);
+    this._writeSegments(bs);
+    this._writeTerminator(bs);
+    this._writePaddingBits(bs);
+    this._writePadCodewords(bs);
 
     return bs.getBytes();
 };
-Symbol.prototype.writeStructuredAppendHeader = function (bs) {
+Symbol.prototype._writeStructuredAppendHeader = function (bs) {
     bs.append(ModeIndicator.STRUCTURED_APPEND_VALUE, ModeIndicator.LENGTH);
     bs.append(this._position, SymbolSequenceIndicator.POSITION_LENGTH);
     bs.append(this._parent.count - 1, SymbolSequenceIndicator.TOTAL_NUMBER_LENGTH);
     bs.append(this._parent.structuredAppendParity, StructuredAppend.PARITY_DATA_LENGTH);
 };
-Symbol.prototype.writeSegments = function (bs) {
+Symbol.prototype._writeSegments = function (bs) {
     for (let i = 0, seglen = this._segments.length; i < seglen; i++) {
         const segment = this._segments[i];
 
@@ -2901,7 +2901,7 @@ Symbol.prototype.writeSegments = function (bs) {
         bs.append(data[data.length - 1] >> (8 - codewordBitLength), codewordBitLength);
     }
 };
-Symbol.prototype.writeTerminator = function (bs) {
+Symbol.prototype._writeTerminator = function (bs) {
     let terminatorLength = this._dataBitCapacity - this._dataBitCounter;
 
     if (terminatorLength > ModeIndicator.LENGTH) {
@@ -2910,12 +2910,12 @@ Symbol.prototype.writeTerminator = function (bs) {
 
     bs.append(ModeIndicator.TERMINATOR_VALUE, terminatorLength);
 };
-Symbol.prototype.writePaddingBits = function (bs) {
+Symbol.prototype._writePaddingBits = function (bs) {
     if (bs.length % 8 > 0) {
         bs.append(0x0, 8 - (bs.length % 8));
     }
 };
-Symbol.prototype.writePadCodewords = function (bs) {
+Symbol.prototype._writePadCodewords = function (bs) {
     const numDataCodewords = DataCodeword.getTotalNumber(
         this._parent.errorCorrectionLevel, this._currVersion);
     let flag = true;
@@ -2926,7 +2926,7 @@ Symbol.prototype.writePadCodewords = function (bs) {
     }
 };
 // シンボルの明暗パターンを返します。
-Symbol.prototype.getModuleMatrix = function () {
+Symbol.prototype._getModuleMatrix = function () {
     const numModulesPerSide = Module.getNumModulesPerSide(this._currVersion);
     const moduleMatrix = new Array(numModulesPerSide);
 
@@ -2953,15 +2953,15 @@ Symbol.prototype.getModuleMatrix = function () {
         VersionInfo.placeTempBlank(moduleMatrix);
     }
 
-    this.placeSymbolChar(moduleMatrix);
+    this._placeSymbolChar(moduleMatrix);
     RemainderBit.place(moduleMatrix);
     Masking.apply(this._currVersion, this._parent.errorCorrectionLevel, moduleMatrix);
 
     return moduleMatrix;
 };
 // シンボルキャラクタを配置します。
-Symbol.prototype.placeSymbolChar = function (moduleMatrix) {
-    const data = this.getEncodingRegionBytes();
+Symbol.prototype._placeSymbolChar = function (moduleMatrix) {
+    const data = this._getEncodingRegionBytes();
 
     let r = moduleMatrix.length - 1;
     let c = moduleMatrix[0].length - 1;
@@ -3023,7 +3023,7 @@ Symbol.prototype.getDIBBase64 = function (moduleSize, colorDepth, foreRgb, backR
     if (colorDepth != 1 && colorDepth != 24) {
         throw new Error("Argument out of range (colorDepth)");
     }
-    
+
     foreRgb = foreRgb === undefined ? Color.BLACK : foreRgb;
     if (!(foreRgb.match(/^#[0-9A-Fa-f]{6}$/))) {
         throw new Error("Argument error (foreRgb)");
@@ -3033,7 +3033,7 @@ Symbol.prototype.getDIBBase64 = function (moduleSize, colorDepth, foreRgb, backR
     if (!(backRgb.match(/^#[0-9A-Fa-f]{6}$/))) {
         throw new Error("Argument error (backRgb)");
     }
-    
+
     let dib;
 
     switch (colorDepth) {
@@ -3086,7 +3086,7 @@ Symbol.prototype.get1bppDIB = function (moduleSize, foreRgb, backRgb) {
     const foreColor = Color.decode(foreRgb);
     const backColor = Color.decode(backRgb);
 
-    const moduleMatrix = QuietZone.place(this.getModuleMatrix());
+    const moduleMatrix = QuietZone.place(this._getModuleMatrix());
 
     const width = moduleSize * moduleMatrix.length;
     const height = width;
@@ -3161,7 +3161,7 @@ Symbol.prototype.get24bppDIB = function (moduleSize, foreRgb, backRgb) {
     const foreColor = Color.decode(foreRgb);
     const backColor = Color.decode(backRgb);
 
-    const moduleMatrix = QuietZone.place(this.getModuleMatrix());
+    const moduleMatrix = QuietZone.place(this._getModuleMatrix());
 
     const width = moduleSize * moduleMatrix.length;
     const height = width;
@@ -3287,7 +3287,7 @@ Symbols.prototype.item = function (index) {
     return this._items[index];
 };
 // シンボルを追加します。
-Symbols.prototype.add = function () {
+Symbols.prototype._add = function () {
     this._currSymbol = new Symbol(this);
     this._items.push(this._currSymbol);
 
@@ -3305,19 +3305,19 @@ Symbols.prototype.appendText = function (s) {
 
         switch (oldMode) {
             case EncodingMode.UNKNOWN:
-                newMode = this.selectInitialMode(s, i);
+                newMode = this._selectInitialMode(s, i);
                 break;
             case EncodingMode.NUMERIC:
-                newMode = this.selectModeWhileInNumericMode(s, i);
+                newMode = this._selectModeWhileInNumericMode(s, i);
                 break;
             case EncodingMode.ALPHA_NUMERIC:
-                newMode = this.selectModeWhileInAlphanumericMode(s, i);
+                newMode = this._selectModeWhileInAlphanumericMode(s, i);
                 break;
             case EncodingMode.EIGHT_BIT_BYTE:
-                newMode = this.selectModeWhileInByteMode(s, i);
+                newMode = this._selectModeWhileInByteMode(s, i);
                 break;
             case EncodingMode.KANJI:
-                newMode = this.selectInitialMode(s, i);
+                newMode = this._selectInitialMode(s, i);
                 break;
             default:
                 throw new Error("Invalid operation");
@@ -3331,8 +3331,8 @@ Symbols.prototype.appendText = function (s) {
                     throw new Error("String too long");
                 }
 
-                this.add();
-                newMode = this.selectInitialMode(s, i);
+                this._add();
+                newMode = this._selectInitialMode(s, i);
                 this._currSymbol.trySetEncodingMode(newMode, c);
             }
         }
@@ -3342,8 +3342,8 @@ Symbols.prototype.appendText = function (s) {
                 throw new Error("String too long");
             }
 
-            this.add();
-            newMode = this.selectInitialMode(s, i);
+            this._add();
+            newMode = this._selectInitialMode(s, i);
             this._currSymbol.trySetEncodingMode(newMode, c);
             this._currSymbol.tryAppend(c);
         }
@@ -3354,7 +3354,7 @@ Symbols.prototype.appendText = function (s) {
  * @param {String} s            対象文字列
  * @param {Number} startIndex   評価を開始する位置
  */
-Symbols.prototype.selectInitialMode = function (s, startIndex) {
+Symbols.prototype._selectInitialMode = function (s, startIndex) {
     const version = this._currSymbol.version;
 
     if (KanjiEncoder.inSubset(s[startIndex])) {
@@ -3460,7 +3460,7 @@ Symbols.prototype.selectInitialMode = function (s, startIndex) {
  * @param {String} s            対象文字列
  * @param {Number} startIndex   評価を開始する位置
  */
-Symbols.prototype.selectModeWhileInNumericMode = function (s, startIndex) {
+Symbols.prototype._selectModeWhileInNumericMode = function (s, startIndex) {
     if (ByteEncoder.inExclusiveSubset(s[startIndex])) {
         return EncodingMode.EIGHT_BIT_BYTE;
     }
@@ -3480,7 +3480,7 @@ Symbols.prototype.selectModeWhileInNumericMode = function (s, startIndex) {
  * @param {String} s            対象文字列
  * @param {Number} startIndex   評価を開始する位置
  */
-Symbols.prototype.selectModeWhileInAlphanumericMode = function (s, startIndex) {
+Symbols.prototype._selectModeWhileInAlphanumericMode = function (s, startIndex) {
     const version = this._currSymbol.version;
 
     if (KanjiEncoder.inSubset(s[startIndex])) {
@@ -3530,7 +3530,7 @@ Symbols.prototype.selectModeWhileInAlphanumericMode = function (s, startIndex) {
  * @param {String} s            対象文字列
  * @param {Number} startIndex   評価を開始する位置
  */
-Symbols.prototype.selectModeWhileInByteMode = function (s, startIndex) {
+Symbols.prototype._selectModeWhileInByteMode = function (s, startIndex) {
     const version = this._currSymbol.version;
     let cnt = 0;
     let flg = false;

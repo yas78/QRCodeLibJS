@@ -1,2 +1,16 @@
-# QRCodeLibJS
-QR Code generator library in JavaScript
+# __QRCodeLibJS__
+
+QRCodeLibJSは、JavaScriptで書かれたQRコード生成スクリプトです。  
+JIS X 0510に基づくモデル２コードシンボルを生成します。
+
+## 特徴
+
+- 数字・英数字・8ビットバイト・漢字モードに対応しています
+- 分割QRコードを作成可能です
+- 1bppまたは24bpp BMPファイル(DIB)へ保存可能です
+- 画像の配色(前景色・背景色)を指定可能です
+
+## 使用方法
+
+demo.html を参照してください。
+
