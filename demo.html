@@ -2,43 +2,61 @@
 <html>
 <head>
     <meta charset="utf-8" />
-    <title></title>
+    <title>QRCodeLibJS</title>
 </head>
 <body onload="initUI()">
-    <div style="margin:15px">
-        <label>Error Correction Level:</label>
-        <select id="ecl" onchange="createQRCode()">
+    <div>
+        <label>Error Correction:</label>
+        <select id="ecr" onchange="createQRCode()">
             <option value="0">L</option>
             <option value="1" selected>M</option>
             <option value="2">Q</option>
             <option value="3">H</option>
         </select>
-        <label style="margin-left:20px">Max Version:</label>
-        <select id="maxVer" onchange="createQRCode()"></select>
-        <input type="checkbox" id="sa" style="margin-left:20px" onchange="createQRCode()" />
-        Structured Append<br />
+    </div>
+    <div>
+        <label>Version Limit:</label>
+        <select id="verLimit" onchange="createQRCode()"></select>
+    </div>
+    <div>
+        <label>
+        <input type="checkbox" id="structuredAppend" onchange="createQRCode()" />Structured Append</label>
+    </div>
+    <div>
         <label>Module Size:</label>
         <select id="moduleSize" onchange="createQRCode()"></select>
-        <label style="margin-left:20px">Fore Color:</label>
+    </div>
+    <div>
+        <label>Fore Color:</label>
         <input id="foreColor" type="text" size="6" maxlength="6" value="000000" onblur="colorValidation(this)" />
-        <label style="margin-left:20px">Back Color:</label>
+    </div>
+    <div>
+        <label>Back Color:</label>
         <input id="backColor" type="text" size="6" maxlength="6" value="FFFFFF" onblur="colorValidation(this)" />
-        <label style="margin-left:20px">Color Depth:</label>
+    </div>
+    <div>
+        <label >Color Depth:</label>
         <select id="colorDepth" onchange="createQRCode()">
             <option value="1" selected>1</option>
             <option value="24">24</option>
         </select>
-        <br />
-        <label>Data:</label><br />
-        <textarea id="data" onkeyup="createQRCode()" rows="8" cols="85"></textarea>
-        <input type="button" onclick="download()" value="Download" /><br />
     </div>
+    <div>
+        <label>Format:</label>
+        <input name="format" type="radio" value="bmp" checked="checked" onchange="createQRCode()" />BMP
+        <input name="format" type="radio" value="svg" onchange="createQRCode()" />SVG
+    </div>
+    <label>Data:</label>
+    <div>
+        <textarea id="data" onkeyup="createQRCode()" rows="8" cols="80"></textarea>
+    </div>
+    <input type="button" onclick="download()" value="Download" />
     <div id="images"></div>
 
-    <script type='text/javascript' src='js/QRCode.js'></script>
-    <script type="text/javascript">
+    <script src='js/QRCode.js'></script>
+    <script>
         function initUI() {
-            const maxVer = document.getElementById("maxVer");
+            const verLimit = document.getElementById("verLimit");
             for (let i = 1; i <= 40; i++) {
                 const opt = document.createElement('option');
                 opt.value = i;
@@ -46,21 +64,22 @@
                 if (i == 40) {
                     opt.selected = true;
                 }
-                maxVer.appendChild(opt);
+                verLimit.appendChild(opt);
             }
 
             const moduleSize = document.getElementById("moduleSize");
-            for (let i = 1; i <= 20; i++) {
+            for (let i = 2; i <= 20; i++) {
                 const opt = document.createElement('option');
                 opt.value = i;
                 opt.innerText = i;
-                if (i == 4) {
+                if (i == 5) {
                     opt.selected = true;
                 }
                 moduleSize.appendChild(opt);
             }
         }
-
+    </script>
+    <script>
         function createQRCode() {
             const images = document.getElementById("images");
             images.textContent = null;
@@ -70,19 +89,31 @@
                 return;
             }
 
-            const elems = document.getElementById("ecl")
-            let ecl;
+            const elems = document.getElementById("ecr")
+            let ecr;
             for (let i = 0; i < elems.length; i++) {
                 if (elems[i].selected) {
-                    ecl = elems[i].value;
+                    ecr = elems[i].value;
                 }
             }
 
-            const vl = document.getElementById("maxVer").value
-            const sa = document.getElementById("sa").checked
+            const vl = document.getElementById("verLimit").value
+            const sa = document.getElementById("structuredAppend").checked
+            const colorDepth = document.getElementById("colorDepth").value;;
+            const moduleSize = document.getElementById("moduleSize").value;
+            const foreColor = "#" + document.getElementById("foreColor").value;
+            const backColor = "#" + document.getElementById("backColor").value;
 
-            const sbls = new Symbols(ecl, vl, sa);
+            const formats = document.getElementsByName("format");
+            let format;
+            for (let i = 0; i < formats.length; i++) {
+                if (formats[i].checked) {
+                    format = formats[i].value;
+                    break;
+                }
+            }
 
+            const sbls = new Symbols(ecr, vl, sa);
             try {
                 sbls.appendText(data.value);
             } catch (ex) {
@@ -90,16 +121,23 @@
                 return;
             }
 
-            const colorDepth = document.getElementById("colorDepth").value;;
-            const moduleSize = document.getElementById("moduleSize").value;
-            const foreColor = "#" + document.getElementById("foreColor").value;
-            const backColor = "#" + document.getElementById("backColor").value;
-
+            let encData;
+            let img;
             for (let i = 0; i < sbls.count; i++) {
                 const sbl = sbls.item(i);
-
-                const img = "data:image/bmp;base64," +
-                    sbl.getDIBBase64(moduleSize, colorDepth, foreColor, backColor);
+                switch (format) {
+                    case "bmp":
+                        encData = sbl.getDIBBase64(moduleSize, colorDepth, foreColor, backColor);
+                        img = "data:image/bmp;base64," + encData;
+                        break;
+                    case "svg":
+                        const svg = sbl.getSvg(moduleSize, foreColor);
+                        encData = encodeURIComponent(svg);
+                        img = "data:image/svg+xml," + encData;
+                        break;
+                    default:
+                        break;
+                }
                 const qrcode = document.createElement("img");
                 qrcode.src = img;
                 images.appendChild(qrcode);
@@ -111,14 +149,27 @@
 
             for (let i = 0; i < images.childNodes.length; i++) {
                 const image = images.childNodes[i];
-                saveToFile(image.src, "qrcode_" + i.toString() + ".bmp");
+                const ext = image.src.match(/image\/(bmp|svg)/)[1];
+                const encData = image.src.split(',')[1];
+                let decData;
+                let mimeType
+                switch (ext) {
+                    case "bmp":
+                        decData = window.atob(encData);
+                        mimeType = "image/bmp";
+                        break;
+                    case "svg":
+                        decData = decodeURIComponent(encData);
+                        mimeType = "text/plain";
+                        break;
+                    default:
+                        break;
+                }
+                saveToFile("qrcode_" + i.toString() + "." + ext, decData, mimeType);
             }
         }
 
-        function saveToFile(base64, fileName) {
-            const tmp = base64.split(',');
-            const data = window.atob(tmp[1]);
-            const mimeType = tmp[0].split(':')[1].split(';')[0];
+        function saveToFile(fileName, data, mimeType) {
             const buffer = new Uint8Array(data.length);
 
             for (let i = 0; i < data.length; i++) {
@@ -146,11 +197,10 @@
                 a.click();
             } else {
                 // for Safari
-                window.open(base64, '_blank');
+                window.open(data, '_blank');
             }
         }
-    </script>
-    <script type="text/javascript">
+
         function colorValidation(arg) {
             const pattern = /^[0-9A-Fa-f]{6}$/;
             if (!(arg.value.match(pattern))) {
