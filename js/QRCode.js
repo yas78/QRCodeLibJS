@@ -1399,20 +1399,18 @@ NumericEncoder.prototype.__defineGetter__("modeIndicator", function () {
 });
 NumericEncoder.prototype.append = function (c) {
     const wd = (parseInt(c.charAt(0)));
-    let ret;
 
     if (this._charCounter % 3 == 0) {
         this._codeWords.push(wd);
-        ret = 4;
     } else {
         this._codeWords[this._codeWords.length - 1] *= 10;
         this._codeWords[this._codeWords.length - 1] += wd;
-        ret = 3;
     }
 
-    this._charCounter++;
+    const ret = this.getCodewordBitLength(c);
     this._bitCounter += ret;
-
+    this._charCounter++;
+    
     return ret;
 };
 NumericEncoder.prototype.getCodewordBitLength = function (c) {
@@ -1465,20 +1463,18 @@ AlphanumericEncoder.prototype.__defineGetter__("modeIndicator", function () {
 });
 AlphanumericEncoder.prototype.append = function (c) {
     const wd = AlphanumericEncoder._convertCharCode(c);
-    let ret;
-
+    
     if (this._charCounter % 2 == 0) {
         this._codeWords.push(wd);
-        ret = 6;
     } else {
         this._codeWords[this._codeWords.length - 1] *= 45;
         this._codeWords[this._codeWords.length - 1] += wd;
-        ret = 5;
     }
 
-    this._charCounter++;
+    const ret = this.getCodewordBitLength(c);
     this._bitCounter += ret;
-
+    this._charCounter++;
+    
     return ret;
 };
 AlphanumericEncoder.prototype.getCodewordBitLength = function (c) {
@@ -1581,7 +1577,6 @@ KanjiEncoder.prototype.append = function (c) {
     }
 
     wd = ((wd >> 8) * 0xC0) + (wd & 0xFF);
-
     this._codeWords.push(wd);
     this._charCounter++;
     this._bitCounter += 13;
@@ -1615,11 +1610,14 @@ KanjiEncoder.inSubset = function (c) {
             0x40 <= charBytes[1] && charBytes[1] <= 0xFC &&
             0x7F != charBytes[1]
         );
-    } else {
-        return false;
     }
+    return false;
 };
 KanjiEncoder.inExclusiveSubset = function (c) {
+    if (AlphanumericEncoder.inSubset(c)) {
+        return false;
+    }
+
     return KanjiEncoder.inSubset(c);
 };
 KanjiEncoder._textEncoding = Charset.getEncoding("shift_jis");
@@ -1638,14 +1636,14 @@ ByteEncoder.prototype.__defineGetter__("modeIndicator", function () {
 });
 ByteEncoder.prototype.append = function (c) {
     const charBytes = this._charset.getBytes(c.charAt(0));
-    let ret = 0;
-
+    
     for (let i = 0, end = charBytes.length; i < end; i++) {
         this._codeWords.push(charBytes[i]);
-        this._charCounter++;
-        this._bitCounter += 8;
-        ret += 8;
     }
+
+    const ret = 8 * charBytes.length;
+    this._bitCounter += ret;
+    this._charCounter += charBytes.length;
 
     return ret;
 };
@@ -2699,7 +2697,7 @@ Symbol.prototype._writeStructuredAppendHeader = function (bs) {
     bs.append(ModeIndicator.STRUCTURED_APPEND_VALUE, ModeIndicator.LENGTH);
     bs.append(this._position, SymbolSequenceIndicator.POSITION_LENGTH);
     bs.append(this._parent.count - 1, SymbolSequenceIndicator.TOTAL_NUMBER_LENGTH);
-    bs.append(this._parent.structuredAppendParity, StructuredAppend.PARITY_DATA_LENGTH);
+    bs.append(this._parent.parity, StructuredAppend.PARITY_DATA_LENGTH);
 };
 Symbol.prototype._writeSegments = function (bs) {
     for (let i = 0, seglen = this._segments.length; i < seglen; i++) {
@@ -3245,7 +3243,7 @@ function Symbols(ecLevel, maxVersion, allowStructuredAppend, byteModeEncoding) {
     this._structuredAppendAllowed = allowStructuredAppend;
     this._byteModeEncoding = Charset.getEncoding(byteModeEncoding);
     this._shiftJISEncoding = Charset.getEncoding("shift_jis");
-    this._structuredAppendParity = 0;
+    this._parity = 0;
     this._currSymbol = new Symbol(this);
     this._items.push(this._currSymbol);
 }
@@ -3267,8 +3265,8 @@ Symbols.prototype.__defineGetter__("errorCorrectionLevel", function () {
 Symbols.prototype.__defineGetter__("structuredAppendAllowed", function () {
     return this._structuredAppendAllowed;
 });
-Symbols.prototype.__defineGetter__("structuredAppendParity", function () {
-    return this._structuredAppendParity;
+Symbols.prototype.__defineGetter__("parity", function () {
+    return this._parity;
 });
 Symbols.prototype.__defineGetter__("byteModeEncoding", function () {
     return this._byteModeEncoding;
@@ -3439,12 +3437,12 @@ Symbols.prototype._selectInitialMode = function (s, startIndex) {
     throw new Error("Invalid operation");
 };
 Symbols.prototype._selectModeWhileInNumericMode = function (s, startIndex) {
-    if (ByteEncoder.inExclusiveSubset(s[startIndex])) {
-        return EncodingMode.EIGHT_BIT_BYTE;
-    }
-
     if (KanjiEncoder.inSubset(s[startIndex])) {
         return EncodingMode.KANJI;
+    }
+
+    if (ByteEncoder.inExclusiveSubset(s[startIndex])) {
+        return EncodingMode.EIGHT_BIT_BYTE;
     }
 
     if (AlphanumericEncoder.inExclusiveSubset(s[startIndex])) {
@@ -3584,7 +3582,7 @@ Symbols.prototype.updateParity = function (c) {
     }
 
     for (let i = 0, end = charBytes.length; i < end; i++) {
-        this._structuredAppendParity ^= charBytes[i];
+        this._parity ^= charBytes[i];
     }
 };
 
