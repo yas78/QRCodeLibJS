@@ -1,6 +1,20 @@
 "use strict";
 
 
+function Values() { }
+Values.BLANK = 0;
+Values.WORD = 1;
+Values.ALIGNMENT = 2;
+Values.FINDER = 3;
+Values.FORMAT = 4;
+Values.SEPARATOR = 5;
+Values.TIMING = 6;
+Values.VERSION = 7;
+Values.isDark = function (arg) {
+    return arg > this.BLANK;
+};
+
+
 function BitmapFileHeader() { }
 BitmapFileHeader.prototype.getBytes = function () {
     const ret = new Uint8Array(14);
@@ -12,6 +26,7 @@ BitmapFileHeader.prototype.getBytes = function () {
 
     return ret;
 };
+
 
 function BitmapInfoHeader() { }
 BitmapInfoHeader.prototype.getBytes = function () {
@@ -30,6 +45,7 @@ BitmapInfoHeader.prototype.getBytes = function () {
 
     return ret;
 };
+
 
 function Color(r, g, b) {
     if (!(0 <= r && r <= 255) ||
@@ -88,6 +104,7 @@ Color.isWebColor = function (arg) {
     const pattern = /^#[0-9A-Fa-f]{6}$/;
     return pattern.test(arg);
 }
+
 
 function DIB() { }
 DIB.build1bppDIB = function (bitmapData, width, height, foreColor, backColor) {
@@ -185,6 +202,7 @@ DIB.build24bppDIB = function (bitmapData, width, height) {
     return ret;
 };
 
+
 function RgbQuad() { }
 RgbQuad.prototype.getBytes = function () {
     const ret = new Uint8Array(4);
@@ -195,6 +213,7 @@ RgbQuad.prototype.getBytes = function () {
 
     return ret;
 };
+
 
 function Charset() { }
 Charset.getEncoding = function (name) {
@@ -207,6 +226,7 @@ Charset.getEncoding = function (name) {
             throw new Error("Argument error");
     }
 };
+
 
 function ShiftJISCharset() {
     Charset.call(this);
@@ -1239,6 +1259,7 @@ ShiftJISCharset._charCodeMap = {
     /*                                                                           */ 0xFFE4: 0xFA55, 0xFF07: 0xFA56, 0xFF02: 0xFA57
 };
 
+
 function UTF8Charset() {
     Charset.call(this);
 }
@@ -1251,6 +1272,7 @@ UTF8Charset.prototype.getBytes = function (c) {
     return ret;
 };
 UTF8Charset.ENCODING_NAME = "utf-8";
+
 
 function ArrayUtil() { }
 ArrayUtil.copy = function (src_array, src_index, dest_array, dest_index, length) {
@@ -1284,6 +1306,7 @@ ArrayUtil.rotate90 = function (arg) {
     return ret;
 };
 
+
 function BitConverter() { }
 BitConverter.getBytes = function (value, size) {
     if (!(1 <= size && size <= 4)) {
@@ -1311,6 +1334,7 @@ BitConverter.getBytes = function (value, size) {
 
     return ret;
 };
+
 
 function BitSequence() {
     this.clear();
@@ -1387,6 +1411,7 @@ QRCodeEncoder.createEncoder = function (encMode, byteModeEncoding) {
     }
 };
 
+
 function NumericEncoder() {
     QRCodeEncoder.call(this);
 }
@@ -1451,6 +1476,7 @@ NumericEncoder.inExclusiveSubset = function (c) {
     return NumericEncoder.inSubset(c);
 };
 
+
 function AlphanumericEncoder() {
     QRCodeEncoder.call(this);
 }
@@ -1503,12 +1529,6 @@ AlphanumericEncoder.prototype.getBytes = function () {
     return bs.getBytes();
 };
 AlphanumericEncoder._convertCharCode = function (c) {
-    if ("A" <= c && c <= "Z") {
-        return c.charCodeAt(0) - 55;
-    }
-    if ("0" <= c && c <= "9") {
-        return c.charCodeAt(0) - 48;
-    }
     if (c == " ") {
         return 36;
     }
@@ -1524,26 +1544,20 @@ AlphanumericEncoder._convertCharCode = function (c) {
     if (c == "/") {
         return 43;
     }
+    if ("0" <= c && c <= "9") {
+        return c.charCodeAt(0) - 48;
+    }
     if (c == ":") {
         return 44;
     }
-    throw new Error("Argument out of range");
+    if ("A" <= c && c <= "Z") {
+        return c.charCodeAt(0) - 55;
+    }
+
+    return -1;
 };
 AlphanumericEncoder.inSubset = function (c) {
-    return (
-        "A" <= c && c <= "Z" ||
-        "0" <= c && c <= "9" ||
-        c == " " ||
-        c == "." ||
-        c == "-" ||
-        c == "$" ||
-        c == "%" ||
-        c == "*" ||
-        c == "+" ||
-        c == "/" ||
-        c == ":"
-    );
-
+    return AlphanumericEncoder._convertCharCode(c) > -1;
 };
 AlphanumericEncoder.inExclusiveSubset = function (c) {
     if (NumericEncoder.inSubset(c)) {
@@ -1727,10 +1741,8 @@ CharCountIndicator.getLength = function (version, encMode) {
     throw Error("Argument out of range");
 };
 
+
 function Codeword() { }
-Codeword.getTotalNumber = function (version) {
-    return Codeword._totalNumbers[version];
-};
 Codeword._totalNumbers = [
     - 1,
     26, 44, 70, 100, 134, 172, 196, 242, 292, 346,
@@ -1738,11 +1750,12 @@ Codeword._totalNumbers = [
     1156, 1258, 1364, 1474, 1588, 1706, 1828, 1921, 2051, 2185,
     2323, 2465, 2611, 2761, 2876, 3034, 3196, 3362, 3532, 3706
 ];
+Codeword.getTotalNumber = function (version) {
+    return Codeword._totalNumbers[version];
+};
+
 
 function DataCodeword() { }
-DataCodeword.getTotalNumber = function (ecLevel, version) {
-    return DataCodeword._totalNumbers[ecLevel][version];
-};
 DataCodeword._ecLevelL = [
     -1,
     19, 34, 55, 80, 108, 136, 156, 194, 232, 274,
@@ -1778,6 +1791,10 @@ DataCodeword._totalNumbers = [
     DataCodeword._ecLevelQ,
     DataCodeword._ecLevelH
 ];
+DataCodeword.getTotalNumber = function (ecLevel, version) {
+    return DataCodeword._totalNumbers[ecLevel][version];
+};
+
 
 function ModeIndicator() { }
 ModeIndicator.LENGTH = 4;
@@ -1788,12 +1805,48 @@ ModeIndicator.STRUCTURED_APPEND_VALUE = 0x3;
 ModeIndicator.BYTE_VALUE = 0x4;
 ModeIndicator.KANJI_VALUE = 0x8;
 
+
 function Module() { }
 Module.getNumModulesPerSide = function (version) {
     return 17 + 4 * version;
 };
 
+
 function RSBlock() { }
+RSBlock._ecLevelL = [
+    -1,
+    1, 1, 1, 1, 1, 2, 2, 2, 2, 4,
+    4, 4, 4, 4, 6, 6, 6, 6, 7, 8,
+    8, 9, 9, 10, 12, 12, 12, 13, 14, 15,
+    16, 17, 18, 19, 19, 20, 21, 22, 24, 25
+];
+RSBlock._ecLevelM = [
+    -1,
+    1, 1, 1, 2, 2, 4, 4, 4, 5, 5,
+    5, 8, 9, 9, 10, 10, 11, 13, 14, 16,
+    17, 17, 18, 20, 21, 23, 25, 26, 28, 29,
+    31, 33, 35, 37, 38, 40, 43, 45, 47, 49
+];
+RSBlock._ecLevelQ = [
+    -1,
+    1, 1, 2, 2, 4, 4, 6, 6, 8, 8,
+    8, 10, 12, 16, 12, 17, 16, 18, 21, 20,
+    23, 23, 25, 27, 29, 34, 34, 35, 38, 40,
+    43, 45, 48, 51, 53, 56, 59, 62, 65, 68
+];
+RSBlock._ecLevelH = [
+    -1,
+    1, 1, 2, 4, 4, 4, 5, 6, 8, 8,
+    11, 11, 16, 16, 18, 16, 19, 21, 25, 25,
+    25, 34, 30, 32, 35, 37, 40, 42, 45, 48,
+    51, 54, 57, 60, 63, 66, 70, 74, 77, 81
+];
+RSBlock._totalNumbers = [
+    RSBlock._ecLevelL,
+    RSBlock._ecLevelM,
+    RSBlock._ecLevelQ,
+    RSBlock._ecLevelH
+];
 RSBlock.getTotalNumber = function (ecLevel, version, preceding) {
     const numDataCodewords = DataCodeword.getTotalNumber(ecLevel, version);
     const numRSBlocks = RSBlock._totalNumbers[ecLevel][version];
@@ -1830,44 +1883,12 @@ RSBlock.getNumberECCodewords = function (ecLevel, version) {
     return Math.floor(Codeword.getTotalNumber(version) / numRSBlocks)
         - Math.floor(numDataCodewords / numRSBlocks);
 };
-RSBlock._ecLevelL = [
-    -1,
-    1, 1, 1, 1, 1, 2, 2, 2, 2, 4,
-    4, 4, 4, 4, 6, 6, 6, 6, 7, 8,
-    8, 9, 9, 10, 12, 12, 12, 13, 14, 15,
-    16, 17, 18, 19, 19, 20, 21, 22, 24, 25
-];
-RSBlock._ecLevelM = [
-    -1,
-    1, 1, 1, 2, 2, 4, 4, 4, 5, 5,
-    5, 8, 9, 9, 10, 10, 11, 13, 14, 16,
-    17, 17, 18, 20, 21, 23, 25, 26, 28, 29,
-    31, 33, 35, 37, 38, 40, 43, 45, 47, 49
-];
-RSBlock._ecLevelQ = [
-    -1,
-    1, 1, 2, 2, 4, 4, 6, 6, 8, 8,
-    8, 10, 12, 16, 12, 17, 16, 18, 21, 20,
-    23, 23, 25, 27, 29, 34, 34, 35, 38, 40,
-    43, 45, 48, 51, 53, 56, 59, 62, 65, 68
-];
-RSBlock._ecLevelH = [
-    -1,
-    1, 1, 2, 4, 4, 4, 5, 6, 8, 8,
-    11, 11, 16, 16, 18, 16, 19, 21, 25, 25,
-    25, 34, 30, 32, 35, 37, 40, 42, 45, 48,
-    51, 54, 57, 60, 63, 66, 70, 74, 77, 81
-];
-RSBlock._totalNumbers = [
-    RSBlock._ecLevelL,
-    RSBlock._ecLevelM,
-    RSBlock._ecLevelQ,
-    RSBlock._ecLevelH
-];
+
 
 function SymbolSequenceIndicator() { }
 SymbolSequenceIndicator.POSITION_LENGTH = 4;
 SymbolSequenceIndicator.TOTAL_NUMBER_LENGTH = 4;
+
 
 function StructuredAppend() { }
 StructuredAppend.PARITY_DATA_LENGTH = 8;
@@ -1876,30 +1897,8 @@ StructuredAppend.HEADER_LENGTH = ModeIndicator.LENGTH +
     SymbolSequenceIndicator.TOTAL_NUMBER_LENGTH +
     StructuredAppend.PARITY_DATA_LENGTH;
 
+
 function AlignmentPattern() { }
-AlignmentPattern.place = function (version, moduleMatrix) {
-    const centerPosArray = AlignmentPattern._centerPosArrays[version];
-    const maxIndex = centerPosArray.length - 1;
-
-    for (let i = 0; i <= maxIndex; i++) {
-        const r = centerPosArray[i];
-
-        for (let j = 0; j <= maxIndex; j++) {
-            const c = centerPosArray[j];
-            if (i == 0 && j == 0 ||
-                i == 0 && j == maxIndex ||
-                i == maxIndex && j == 0) {
-                continue;
-            }
-
-            ArrayUtil.copy([2, 2, 2, 2, 2], 0, moduleMatrix[r - 2], c - 2, 5);
-            ArrayUtil.copy([2, -2, -2, -2, 2], 0, moduleMatrix[r - 1], c - 2, 5);
-            ArrayUtil.copy([2, -2, 2, -2, 2], 0, moduleMatrix[r + 0], c - 2, 5);
-            ArrayUtil.copy([2, -2, -2, -2, 2], 0, moduleMatrix[r + 1], c - 2, 5);
-            ArrayUtil.copy([2, 2, 2, 2, 2], 0, moduleMatrix[r + 2], c - 2, 5);
-        }
-    }
-};
 AlignmentPattern._centerPosArrays = [
     null,
     null,
@@ -1943,10 +1942,36 @@ AlignmentPattern._centerPosArrays = [
     [6, 26, 54, 82, 110, 138, 166],
     [6, 30, 58, 86, 114, 142, 170]
 ];
+AlignmentPattern.place = function (version, moduleMatrix) {
+    const VAL = Values.ALIGNMENT;
+    const centerPosArray = AlignmentPattern._centerPosArrays[version];
+    const maxIndex = centerPosArray.length - 1;
+
+    for (let i = 0; i <= maxIndex; i++) {
+        const r = centerPosArray[i];
+
+        for (let j = 0; j <= maxIndex; j++) {
+            const c = centerPosArray[j];
+            if (i == 0 && j == 0 ||
+                i == 0 && j == maxIndex ||
+                i == maxIndex && j == 0) {
+                continue;
+            }
+
+            ArrayUtil.copy([VAL, VAL, VAL, VAL, VAL], 0, moduleMatrix[r - 2], c - 2, 5);
+            ArrayUtil.copy([VAL, -VAL, -VAL, -VAL, VAL], 0, moduleMatrix[r - 1], c - 2, 5);
+            ArrayUtil.copy([VAL, -VAL, VAL, -VAL, VAL], 0, moduleMatrix[r + 0], c - 2, 5);
+            ArrayUtil.copy([VAL, -VAL, -VAL, -VAL, VAL], 0, moduleMatrix[r + 1], c - 2, 5);
+            ArrayUtil.copy([VAL, VAL, VAL, VAL, VAL], 0, moduleMatrix[r + 2], c - 2, 5);
+        }
+    }
+};
+
 
 function Constants() { }
 Constants.MIN_VERSION = 1;
 Constants.MAX_VERSION = 40;
+
 
 function EncodingMode() { }
 EncodingMode.UNKNOWN = 0;
@@ -1955,11 +1980,13 @@ EncodingMode.ALPHA_NUMERIC = 2;
 EncodingMode.EIGHT_BIT_BYTE = 3;
 EncodingMode.KANJI = 4;
 
+
 function ErrorCorrectionLevel() { }
 ErrorCorrectionLevel.L = 0;
 ErrorCorrectionLevel.M = 1;
 ErrorCorrectionLevel.Q = 2;
 ErrorCorrectionLevel.H = 3;
+
 
 function Direction() { }
 Direction.UP = 0;
@@ -1967,7 +1994,17 @@ Direction.DOWN = 1;
 Direction.LEFT = 2;
 Direction.RIGHT = 3;
 
+
 function FinderPattern() { }
+FinderPattern._finderPattern = [
+    [Values.FINDER, Values.FINDER, Values.FINDER, Values.FINDER, Values.FINDER, Values.FINDER, Values.FINDER],
+    [Values.FINDER, -Values.FINDER, -Values.FINDER, -Values.FINDER, -Values.FINDER, -Values.FINDER, Values.FINDER],
+    [Values.FINDER, -Values.FINDER, Values.FINDER, Values.FINDER, Values.FINDER, -Values.FINDER, Values.FINDER],
+    [Values.FINDER, -Values.FINDER, Values.FINDER, Values.FINDER, Values.FINDER, -Values.FINDER, Values.FINDER],
+    [Values.FINDER, -Values.FINDER, Values.FINDER, Values.FINDER, Values.FINDER, -Values.FINDER, Values.FINDER],
+    [Values.FINDER, -Values.FINDER, -Values.FINDER, -Values.FINDER, -Values.FINDER, -Values.FINDER, Values.FINDER],
+    [Values.FINDER, Values.FINDER, Values.FINDER, Values.FINDER, Values.FINDER, Values.FINDER, Values.FINDER]
+];
 FinderPattern.place = function (moduleMatrix) {
     const offset = moduleMatrix.length - FinderPattern._finderPattern.length;
 
@@ -1981,17 +2018,18 @@ FinderPattern.place = function (moduleMatrix) {
         }
     }
 };
-FinderPattern._finderPattern = [
-    [2, 2, 2, 2, 2, 2, 2],
-    [2, -2, -2, -2, -2, -2, 2],
-    [2, -2, 2, 2, 2, -2, 2],
-    [2, -2, 2, 2, 2, -2, 2],
-    [2, -2, 2, 2, 2, -2, 2],
-    [2, -2, -2, -2, -2, -2, 2],
-    [2, 2, 2, 2, 2, 2, 2]
-];
+
 
 function FormatInfo() { }
+FormatInfo._formatInfoValues = [
+    0x0000, 0x0537, 0x0A6E, 0x0F59, 0x11EB, 0x14DC, 0x1B85, 0x1EB2, 0x23D6, 0x26E1,
+    0x29B8, 0x2C8F, 0x323D, 0x370A, 0x3853, 0x3D64, 0x429B, 0x47AC, 0x48F5, 0x4DC2,
+    0x5370, 0x5647, 0x591E, 0x5C29, 0x614D, 0x647A, 0x6B23, 0x6E14, 0x70A6, 0x7591,
+    0x7AC8, 0x7FFF
+];
+FormatInfo._formatInfoMaskArray = [
+    0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 1, 0, 1
+];
 FormatInfo.place = function (ecLevel, maskPatternReference, moduleMatrix) {
     const formatInfoValue = FormatInfo.getFormatInfoValue(ecLevel, maskPatternReference);
     let r1 = 0;
@@ -1999,7 +2037,7 @@ FormatInfo.place = function (ecLevel, maskPatternReference, moduleMatrix) {
 
     for (let i = 0; i <= 7; i++) {
         const temp = ((formatInfoValue & (1 << i)) > 0 ? 1 : 0) ^ FormatInfo._formatInfoMaskArray[i];
-        const v = (temp > 0) ? 3 : -3;
+        const v = (temp > 0) ? Values.FORMAT : -Values.FORMAT;
         moduleMatrix[r1][8] = v;
         moduleMatrix[8][c1] = v;
         r1++;
@@ -2014,7 +2052,7 @@ FormatInfo.place = function (ecLevel, maskPatternReference, moduleMatrix) {
 
     for (let i = 8; i <= 14; i++) {
         const temp = ((formatInfoValue & (1 << i)) > 0 ? 1 : 0) ^ FormatInfo._formatInfoMaskArray[i];
-        const v = (temp > 0) ? 3 : -3;
+        const v = (temp > 0) ? Values.FORMAT : -Values.FORMAT;
 
         moduleMatrix[r2][8] = v;
         moduleMatrix[8][c2] = v;
@@ -2026,23 +2064,25 @@ FormatInfo.place = function (ecLevel, maskPatternReference, moduleMatrix) {
             c2--;
         }
     }
+
+    moduleMatrix[moduleMatrix.length - 8][8] = Values.FORMAT;
 };
 FormatInfo.placeTempBlank = function (moduleMatrix) {
-    const numModulesOneSide = moduleMatrix.length;
-
     for (let i = 0; i <= 8; i++) {
-        if (i != 6) {
-            moduleMatrix[8][i] = -3;
-            moduleMatrix[i][8] = -3;
+        if (i == 6) {
+            continue;
         }
+
+        moduleMatrix[8][i] = -Values.FORMAT;
+        moduleMatrix[i][8] = -Values.FORMAT;
     }
 
-    for (let i = numModulesOneSide - 8, end = numModulesOneSide - 1; i <= end; i++) {
-        moduleMatrix[8][i] = -3;
-        moduleMatrix[i][8] = -3;
+    for (let i = moduleMatrix.length - 8, end = moduleMatrix.length; i < end; i++) {
+        moduleMatrix[8][i] = -Values.FORMAT;
+        moduleMatrix[i][8] = -Values.FORMAT;
     }
 
-    moduleMatrix[numModulesOneSide - 8][8] = 2;
+    moduleMatrix[moduleMatrix.length - 8][8] = -Values.FORMAT;
 };
 FormatInfo.getFormatInfoValue = function (ecLevel, maskPatternReference) {
     let indicator;
@@ -2066,23 +2106,9 @@ FormatInfo.getFormatInfoValue = function (ecLevel, maskPatternReference) {
 
     return FormatInfo._formatInfoValues[(indicator << 3) | maskPatternReference];
 };
-FormatInfo._formatInfoValues = [
-    0x0000, 0x0537, 0x0A6E, 0x0F59, 0x11EB, 0x14DC, 0x1B85, 0x1EB2, 0x23D6, 0x26E1,
-    0x29B8, 0x2C8F, 0x323D, 0x370A, 0x3853, 0x3D64, 0x429B, 0x47AC, 0x48F5, 0x4DC2,
-    0x5370, 0x5647, 0x591E, 0x5C29, 0x614D, 0x647A, 0x6B23, 0x6E14, 0x70A6, 0x7591,
-    0x7AC8, 0x7FFF
-];
-FormatInfo._formatInfoMaskArray = [
-    0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 1, 0, 1
-];
+
 
 function GaloisField256() { }
-GaloisField256.toExp = function (arg) {
-    return GaloisField256._intToExpTable[arg];
-};
-GaloisField256.toInt = function (arg) {
-    return GaloisField256._expToIntTable[arg];
-};
 GaloisField256._intToExpTable = [
     -1, 0, 1, 25, 2, 50, 26, 198, 3, 223,
     51, 238, 27, 104, 199, 75, 4, 100, 224, 14,
@@ -2139,6 +2165,13 @@ GaloisField256._expToIntTable = [
     44, 88, 176, 125, 250, 233, 207, 131, 27, 54,
     108, 216, 173, 71, 142, 1
 ];
+GaloisField256.toExp = function (arg) {
+    return GaloisField256._intToExpTable[arg];
+};
+GaloisField256.toInt = function (arg) {
+    return GaloisField256._expToIntTable[arg];
+};
+
 
 function GeneratorPolynomials() { }
 GeneratorPolynomials._gp = []
@@ -2183,6 +2216,7 @@ GeneratorPolynomials.item = function (numECCodeWords) {
     return ret;
 };
 
+
 function Masking() { }
 Masking.apply = function (version, ecLevel, moduleMatrix) {
     let minPenalty = Number.MAX_VALUE;
@@ -2219,7 +2253,7 @@ Masking._mask = function (maskPatternReference, moduleMatrix) {
 
     for (let r = 0, rend = moduleMatrix.length; r < rend; r++) {
         for (let c = 0, cend = moduleMatrix[r].length; c < cend; c++) {
-            if (Math.abs(moduleMatrix[r][c]) == 1) {
+            if (Math.abs(moduleMatrix[r][c]) == Values.WORD) {
                 if (condition(r, c)) {
                     moduleMatrix[r][c] *= -1;
                 }
@@ -2249,6 +2283,7 @@ Masking._getCondition = function (maskPatternReference) {
             throw Error("Argument out of range");
     }
 };
+
 
 function MaskingPenaltyScore() { }
 MaskingPenaltyScore.calcTotal = function (moduleMatrix) {
@@ -2285,7 +2320,7 @@ MaskingPenaltyScore._calcAdjacentModulesInRowInSameColor = function (moduleMatri
         let cnt = 1;
 
         for (let c = 0, cend = row.length - 1; c < cend; c++) {
-            if ((row[c] > 0) == (row[c + 1] > 0)) {
+            if (Values.isDark(row[c]) == Values.isDark(row[c + 1])) {
                 cnt++;
             } else {
                 if (cnt >= 5) {
@@ -2307,11 +2342,11 @@ MaskingPenaltyScore._calcBlockOfModulesInSameColor = function (moduleMatrix) {
 
     for (let r = 0, rend = moduleMatrix.length - 1; r < rend; r++) {
         for (let c = 0, cend = moduleMatrix[r].length - 1; c < cend; c++) {
-            const temp = moduleMatrix[r][c] > 0;
+            const temp = Values.isDark(moduleMatrix[r][c]);
 
-            if ((moduleMatrix[r + 0][c + 1] > 0 == temp) &&
-                (moduleMatrix[r + 1][c + 0] > 0 == temp) &&
-                (moduleMatrix[r + 1][c + 1] > 0 == temp)) {
+            if ((Values.isDark(moduleMatrix[r + 0][c + 1]) == temp) &&
+                (Values.isDark(moduleMatrix[r + 1][c + 0]) == temp) &&
+                (Values.isDark(moduleMatrix[r + 1][c + 1]) == temp)) {
                 penalty += 3;
             }
         }
@@ -2345,19 +2380,19 @@ MaskingPenaltyScore._calcModuleRatioInRow = function (moduleMatrix) {
             let j = range[0] - 1;
             let end;
 
-            for (cnt = 0, end = 0; j >= end && row[j] <= 0; cnt++, j--);
+            for (cnt = 0, end = 0; j >= end && !Values.isDark(row[j]); cnt++, j--);
 
             if (cnt != ratio1) {
                 continue;
             }
 
-            for (cnt = 0, end = 0; j >= end && row[j] > 0; cnt++, j--);
+            for (cnt = 0, end = 0; j >= end && Values.isDark(row[j]); cnt++, j--);
 
             if (cnt != ratio1) {
                 continue;
             }
 
-            for (cnt = 0, end = 0; j >= end && row[j] <= 0; cnt++, j--);
+            for (cnt = 0, end = 0; j >= end && !Values.isDark(row[j]); cnt++, j--);
 
             if (cnt >= ratio4) {
                 impose = true;
@@ -2365,19 +2400,19 @@ MaskingPenaltyScore._calcModuleRatioInRow = function (moduleMatrix) {
 
             j = range[1] + 1;
 
-            for (cnt = 0, end = row.length - 1; j <= end && row[j] <= 0; cnt++, j++);
+            for (cnt = 0, end = row.length - 1; j <= end && !Values.isDark(row[j]); cnt++, j++);
 
             if (cnt != ratio1) {
                 continue;
             }
 
-            for (cnt = 0, end = row.length - 1; j <= end && row[j] > 0; cnt++, j++);
+            for (cnt = 0, end = row.length - 1; j <= end && Values.isDark(row[j]); cnt++, j++);
 
             if (cnt != ratio1) {
                 continue;
             }
 
-            for (cnt = 0, end = row.length - 1; j <= end && row[j] <= 0; cnt++, j++);
+            for (cnt = 0, end = row.length - 1; j <= end && !Values.isDark(row[j]); cnt++, j++);
 
             if (cnt >= ratio4) {
                 impose = true;
@@ -2394,18 +2429,17 @@ MaskingPenaltyScore._calcModuleRatioInRow = function (moduleMatrix) {
 MaskingPenaltyScore._getRatio3Ranges = function (arg) {
     const ret = [];
     let s = 0;
-    let e;
 
-    for (let i = QuietZone.WIDTH, end = arg.length - QuietZone.WIDTH; i < end; i++) {
-        if (arg[i] > 0 && arg[i - 1] <= 0) {
-            s = i;
-        }
-
-        if (arg[i] > 0 && arg[i + 1] <= 0) {
-            e = i;
-
-            if ((e + 1 - s) % 3 == 0) {
-                ret.push([s, e]);
+    for (let i = 1, end = arg.length - 1; i < end; i++) {
+        if (Values.isDark(arg[i])) {
+            if (!Values.isDark(arg[i - 1])) {
+                s = i;
+            }
+            
+            if (!Values.isDark(arg[i + 1])) {
+                if ((i + 1 - s) % 3 == 0) {
+                    ret.push([s, i]);
+                }
             }
         }
     }
@@ -2419,20 +2453,22 @@ MaskingPenaltyScore._calcProportionOfDarkModules = function (moduleMatrix) {
         const row = moduleMatrix[r];
 
         for (let c = 0, cend = row.length; c < cend; c++) {
-            if (row[c] > 0) {
+            if (Values.isDark(row[c])) {
                 darkCount++;
             }
         }
     }
 
     const numModules = Math.pow(moduleMatrix.length, 2);
-    let temp;
-    temp = Math.ceil(darkCount / numModules * 100);
-    temp = Math.abs(temp - 50);
-    temp = Math.floor((temp + 4) / 5);
+    let k;
+    k = darkCount / numModules * 100;
+    k = Math.abs(k - 50);
+    k = Math.floor(k / 5);
+    const penalty = parseInt(k) * 10;
 
-    return temp * 10;
+    return penalty;
 };
+
 
 function QuietZone() { }
 QuietZone.place = function (moduleMatrix) {
@@ -2460,24 +2496,26 @@ function RemainderBit() { }
 RemainderBit.place = function (moduleMatrix) {
     for (let r = 0, rend = moduleMatrix.length; r < rend; r++) {
         for (let c = 0, cend = moduleMatrix[r].length; c < cend; c++) {
-            if (moduleMatrix[r][c] == 0) {
-                moduleMatrix[r][c] = -1;
+            if (moduleMatrix[r][c] == Values.BLANK) {
+                moduleMatrix[r][c] = -Values.WORD;
             }
         }
     }
 };
 
+
 function Separator() { }
 Separator.place = function (moduleMatrix) {
+    const VAL = Values.SEPARATOR;
     const offset = moduleMatrix.length - 8;
 
     for (let i = 0; i <= 7; i++) {
-        moduleMatrix[i][7] = -2;
-        moduleMatrix[7][i] = -2;
-        moduleMatrix[offset + i][7] = -2;
-        moduleMatrix[offset + 0][i] = -2;
-        moduleMatrix[i][offset + 0] = -2;
-        moduleMatrix[7][offset + i] = -2;
+        moduleMatrix[i][7] = -VAL;
+        moduleMatrix[7][i] = -VAL;
+        moduleMatrix[offset + i][7] = -VAL;
+        moduleMatrix[offset + 0][i] = -VAL;
+        moduleMatrix[i][offset + 0] = -VAL;
+        moduleMatrix[7][offset + i] = -VAL;
     }
 };
 
@@ -2788,12 +2826,12 @@ Symbol.prototype._placeSymbolChar = function (moduleMatrix) {
     let rowDirection = -1;
 
     for (let i = 0, end = data.length; i < end; i++) {
-        const value = data[i];
+        const v = data[i];
         let bitPos = 7;
 
         while (bitPos >= 0) {
-            if (moduleMatrix[r][c] == 0) {
-                moduleMatrix[r][c] = (value & (1 << bitPos)) > 0 ? 1 : -1;
+            if (moduleMatrix[r][c] == Values.BLANK) {
+                moduleMatrix[r][c] = (v & (1 << bitPos)) > 0 ? Values.WORD : -Values.WORD;
                 bitPos--;
             }
 
@@ -2923,7 +2961,7 @@ Symbol.prototype.get1bppDIB = function (moduleSize, foreRgb, backRgb) {
     for (let r = moduleMatrix.length - 1; r >= 0; r--) {
         const bs = new BitSequence();
         for (let c = 0, end = moduleMatrix[r].length; c < end; c++) {
-            const color = moduleMatrix[r][c] > 0 ? 0 : 1;
+            const color = Values.isDark(moduleMatrix[r][c]) ? 0 : 1;
             for (let i = 1; i <= moduleSize; i++) {
                 bs.append(color, 1);
             }
@@ -2986,7 +3024,7 @@ Symbol.prototype.get24bppDIB = function (moduleSize, foreRgb, backRgb) {
         let index = 0;
 
         for (let c = 0, end = moduleMatrix[r].length; c < end; c++) {
-            const color = moduleMatrix[r][c] > 0 ? foreColor : backColor;
+            const color = Values.isDark(moduleMatrix[r][c]) ? foreColor : backColor;
 
             for (let i = 1; i <= moduleSize; i++) {
                 bitmapRow[index++] = color.b;
@@ -3004,7 +3042,6 @@ Symbol.prototype.get24bppDIB = function (moduleSize, foreRgb, backRgb) {
     const ret = DIB.build24bppDIB(bitmapData, width, height);
     return ret;
 };
-
 Symbol.prototype.getSvg = function (moduleSize, foreRgb) {
     if (this._dataBitCounter == 0) {
         throw new Error("IllegalState");
@@ -3030,9 +3067,9 @@ Symbol.prototype.getSvg = function (moduleSize, foreRgb) {
         const imageRow = new Array(width);
         let c = 0;
 
-        for (let value of row) {
+        for (let v of row) {
             for (let j = 0; j < moduleSize; j++) {
-                imageRow[c] = value;
+                imageRow[c] = v;
                 c++;
             }
         }
@@ -3043,14 +3080,14 @@ Symbol.prototype.getSvg = function (moduleSize, foreRgb) {
         }
     }
 
-    const paths = GraphicPath.findContours(image);
+    const gpPaths = GraphicPath.findContours(image);
     let buf = "";
     const indent = " ".repeat(11);
 
-    for (let path of paths) {
+    for (let gpPath of gpPaths) {
         buf += (indent + "M ");
 
-        for (let p of path) {
+        for (let p of gpPath) {
             buf += (p.x + "," + p.y + " ");
         }
         buf += ("Z\n");
@@ -3093,7 +3130,7 @@ Point.prototype.equals = function (obj) {
 
 function GraphicPath() { }
 GraphicPath.findContours = function (image) {
-    const paths = new Array();
+    const gpPaths = new Array();
 
     for (let y = 0; y < image.length - 1; y++) {
         for (let x = 0; x < image[y].length - 1; x++) {
@@ -3107,8 +3144,8 @@ GraphicPath.findContours = function (image) {
 
             image[y][x] = Number.MAX_VALUE;
             let start = new Point(x, y);
-            let path = new Array();
-            path.push(start);
+            let gpPath = new Array();
+            gpPath.push(start);
 
             let dr = Direction.UP;
             let p = new Point(start.x, start.y - 1);
@@ -3123,13 +3160,13 @@ GraphicPath.findContours = function (image) {
                             if (image[p.y][p.x + 1] <= 0)
                                 p = new Point(p.x, p.y - 1);
                             else {
-                                path.push(p);
+                                gpPath.push(p);
                                 dr = Direction.RIGHT;
                                 p = new Point(p.x + 1, p.y);
                             }
                         } else {
                             p = new Point(p.x, p.y + 1);
-                            path.push(p);
+                            gpPath.push(p);
                             dr = Direction.LEFT;
                             p = new Point(p.x - 1, p.y);
                         }
@@ -3142,13 +3179,13 @@ GraphicPath.findContours = function (image) {
                             if (image[p.y][p.x - 1] <= 0)
                                 p = new Point(p.x, p.y + 1);
                             else {
-                                path.push(p);
+                                gpPath.push(p);
                                 dr = Direction.LEFT;
                                 p = new Point(p.x - 1, p.y);
                             }
                         } else {
                             p = new Point(p.x, p.y - 1);
-                            path.push(p);
+                            gpPath.push(p);
                             dr = Direction.RIGHT;
                             p = new Point(p.x + 1, p.y);
                         }
@@ -3161,13 +3198,13 @@ GraphicPath.findContours = function (image) {
                             if (image[p.y - 1][p.x] <= 0)
                                 p = new Point(p.x - 1, p.y);
                             else {
-                                path.push(p);
+                                gpPath.push(p);
                                 dr = Direction.UP;
                                 p = new Point(p.x, p.y - 1);
                             }
                         } else {
                             p = new Point(p.x + 1, p.y);
-                            path.push(p);
+                            gpPath.push(p);
                             dr = Direction.DOWN;
                             p = new Point(p.x, p.y + 1);
                         }
@@ -3180,13 +3217,13 @@ GraphicPath.findContours = function (image) {
                             if (image[p.y + 1][p.x] <= 0)
                                 p = new Point(p.x + 1, p.y);
                             else {
-                                path.push(p);
+                                gpPath.push(p);
                                 dr = Direction.DOWN;
                                 p = new Point(p.x, p.y + 1);
                             }
                         } else {
                             p = new Point(p.x - 1, p.y);
-                            path.push(p);
+                            gpPath.push(p);
                             dr = Direction.UP;
                             p = new Point(p.x, p.y - 1);
                         }
@@ -3198,11 +3235,11 @@ GraphicPath.findContours = function (image) {
 
             } while (!(p.equals(start)));
 
-            paths.push(path);
+            gpPaths.push(gpPath);
         }
     }
 
-    return paths;
+    return gpPaths;
 }
 
 function Symbols(ecLevel, maxVersion, allowStructuredAppend, byteModeEncoding) {
@@ -3294,13 +3331,13 @@ Symbols.prototype.appendText = function (s) {
                 newMode = this._selectInitialMode(s, i);
                 break;
             case EncodingMode.NUMERIC:
-                newMode = this._selectModeWhileInNumericMode(s, i);
+                newMode = this._selectModeWhileInNumeric(s, i);
                 break;
             case EncodingMode.ALPHA_NUMERIC:
-                newMode = this._selectModeWhileInAlphanumericMode(s, i);
+                newMode = this._selectModeWhileInAlphanumeric(s, i);
                 break;
             case EncodingMode.EIGHT_BIT_BYTE:
-                newMode = this._selectModeWhileInByteMode(s, i);
+                newMode = this._selectModeWhileInByte(s, i);
                 break;
             case EncodingMode.KANJI:
                 newMode = this._selectInitialMode(s, i);
@@ -3335,137 +3372,146 @@ Symbols.prototype.appendText = function (s) {
         }
     }
 };
-Symbols.prototype._selectInitialMode = function (s, startIndex) {
-    const version = this._currSymbol.version;
-
-    if (KanjiEncoder.inSubset(s[startIndex])) {
+Symbols.prototype._selectInitialMode = function (s, start) {
+    if (KanjiEncoder.inSubset(s[start])) {
         return EncodingMode.KANJI;
     }
 
-    if (ByteEncoder.inExclusiveSubset(s[startIndex])) {
+    if (ByteEncoder.inExclusiveSubset(s[start])) {
         return EncodingMode.EIGHT_BIT_BYTE;
     }
 
-    if (AlphanumericEncoder.inExclusiveSubset(s[startIndex])) {
-        let cnt = 0;
-        let flg;
-
-        for (let i = startIndex, end = s.length; i < end; i++) {
-            if (AlphanumericEncoder.inExclusiveSubset(s[i])) {
-                cnt++;
-            } else {
-                break;
-            }
-        }
-
-        if (1 <= version && version <= 9) {
-            flg = cnt < 6;
-        } else if (10 <= version && version <= 26) {
-            flg = cnt < 7;
-        } else if (27 <= version && version <= 40) {
-            flg = cnt < 8;
-        } else {
-            throw new Error("Invalid operation");
-        }
-
-        if (flg) {
-            if ((startIndex + cnt) < s.length) {
-                if (ByteEncoder.inExclusiveSubset(s[startIndex + cnt])) {
-                    return EncodingMode.EIGHT_BIT_BYTE;
-                } else {
-                    return EncodingMode.ALPHA_NUMERIC;
-                }
-            } else {
-                return EncodingMode.ALPHA_NUMERIC;
-            }
-        } else {
-            return EncodingMode.ALPHA_NUMERIC;
-        }
+    if (AlphanumericEncoder.inExclusiveSubset(s[start])) {
+        return this._selectModeWhenInitialDataAlphanumeric(s, start);
     }
 
-    if (NumericEncoder.inSubset(s[startIndex])) {
-        let cnt = 0;
-        let flg1;
-        let flg2;
-
-        for (let i = startIndex, end = s.length; i < end; i++) {
-            if (NumericEncoder.inSubset(s[i])) {
-                cnt++;
-            } else {
-                break;
-            }
-        }
-
-        if (1 <= version && version <= 9) {
-            flg1 = cnt < 4;
-            flg2 = cnt < 7;
-        } else if (10 <= version && version <= 26) {
-            flg1 = cnt < 4;
-            flg2 = cnt < 8;
-        } else if (27 <= version && version <= 40) {
-            flg1 = cnt < 5;
-            flg2 = cnt < 9;
-        } else {
-            throw new Error("Invalid operation");
-        }
-
-        if (flg1) {
-            if ((startIndex + cnt) < s.length) {
-                flg1 = ByteEncoder.inExclusiveSubset(s[startIndex + cnt]);
-            } else {
-                flg1 = false;
-            }
-        }
-
-        if (flg2) {
-            if ((startIndex + cnt) < s.length) {
-                flg2 = AlphanumericEncoder.inExclusiveSubset(s[startIndex + cnt]);
-            } else {
-                flg2 = false;
-            }
-        }
-
-        if (flg1) {
-            return EncodingMode.EIGHT_BIT_BYTE;
-        } else if (flg2) {
-            return EncodingMode.ALPHA_NUMERIC;
-        } else {
-            return EncodingMode.NUMERIC;
-        }
+    if (NumericEncoder.inSubset(s[start])) {
+        return this._selectModeWhenInitialDataNumeric(s, start);
     }
 
     throw new Error("Invalid operation");
 };
-Symbols.prototype._selectModeWhileInNumericMode = function (s, startIndex) {
-    if (KanjiEncoder.inSubset(s[startIndex])) {
+Symbols.prototype._selectModeWhenInitialDataAlphanumeric = function (s, start) {
+    let cnt = 0;
+    
+    for (let i = start, end = s.length; i < end; i++) {
+        if (AlphanumericEncoder.inExclusiveSubset(s[i])) {
+            cnt++;
+        } else {
+            break;
+        }
+    }
+
+    const version = this._currSymbol.version;
+    let flg;
+
+    if (1 <= version && version <= 9) {
+        flg = cnt < 6;
+    } else if (10 <= version && version <= 26) {
+        flg = cnt < 7;
+    } else if (27 <= version && version <= 40) {
+        flg = cnt < 8;
+    } else {
+        throw new Error("Invalid operation");
+    }
+
+    if (flg) {
+        if ((start + cnt) < s.length) {
+            if (ByteEncoder.inSubset(s[start + cnt])) {
+                return EncodingMode.EIGHT_BIT_BYTE;
+            }
+        }
+    }
+
+    return EncodingMode.ALPHA_NUMERIC;
+};
+Symbols.prototype._selectModeWhenInitialDataNumeric = function (s, start) {
+    let cnt = 0;
+
+    for (let i = start, end = s.length; i < end; i++) {
+        if (NumericEncoder.inSubset(s[i])) {
+            cnt++;
+        } else {
+            break;
+        }
+    }
+    
+    const version = this._currSymbol.version;
+    let flg;
+
+    if (1 <= version && version <= 9) {
+        flg = cnt < 4;
+    } else if (10 <= version && version <= 26) {
+        flg = cnt < 4;
+    } else if (27 <= version && version <= 40) {
+        flg = cnt < 5;
+    } else {
+        throw new Error("Invalid operation");
+    }
+
+    if (flg) {
+        if ((start + cnt) < s.length) {
+            if (ByteEncoder.inExclusiveSubset(s[start + cnt])) {
+                return EncodingMode.EIGHT_BIT_BYTE;
+            }
+        }
+    }
+
+    if (1 <= version && version <= 9) {
+        flg = cnt < 7;
+    } else if (10 <= version && version <= 26) {
+        flg = cnt < 8;
+    } else if (27 <= version && version <= 40) {
+        flg = cnt < 9;
+    } else {
+        throw new Error("Invalid operation");
+    }
+
+    if (flg) {
+        if ((start + cnt) < s.length) {
+            if (AlphanumericEncoder.inExclusiveSubset(s[start + cnt])) {
+                return EncodingMode.ALPHA_NUMERIC;
+            }
+        }
+    }
+
+    return EncodingMode.NUMERIC;
+};
+Symbols.prototype._selectModeWhileInNumeric = function (s, start) {
+    if (KanjiEncoder.inSubset(s[start])) {
         return EncodingMode.KANJI;
     }
 
-    if (ByteEncoder.inExclusiveSubset(s[startIndex])) {
+    if (ByteEncoder.inExclusiveSubset(s[start])) {
         return EncodingMode.EIGHT_BIT_BYTE;
     }
 
-    if (AlphanumericEncoder.inExclusiveSubset(s[startIndex])) {
+    if (AlphanumericEncoder.inExclusiveSubset(s[start])) {
         return EncodingMode.ALPHA_NUMERIC;
     }
 
     return EncodingMode.NUMERIC;
 };
-Symbols.prototype._selectModeWhileInAlphanumericMode = function (s, startIndex) {
-    const version = this._currSymbol.version;
-
-    if (KanjiEncoder.inSubset(s[startIndex])) {
+Symbols.prototype._selectModeWhileInAlphanumeric = function (s, start) {
+    if (KanjiEncoder.inSubset(s[start])) {
         return EncodingMode.KANJI;
     }
 
-    if (ByteEncoder.inExclusiveSubset(s[startIndex])) {
+    if (ByteEncoder.inExclusiveSubset(s[start])) {
         return EncodingMode.EIGHT_BIT_BYTE;
     }
 
-    let cnt = 0;
-    let flg = false;
+    if (this._mustChangeAlphanumericToNumeric(s, start)) {
+        return EncodingMode.NUMERIC;
+    }
 
-    for (let i = startIndex, end = s.length; i < end; i++) {
+    return EncodingMode.ALPHA_NUMERIC;
+};
+Symbols.prototype._mustChangeAlphanumericToNumeric = function (s, start) {
+    let ret = false;
+    let cnt = 0;
+
+    for (let i = start, end = s.length; i < end; i++) {
         if (!AlphanumericEncoder.inSubset(s[i])) {
             break;
         }
@@ -3473,39 +3519,47 @@ Symbols.prototype._selectModeWhileInAlphanumericMode = function (s, startIndex) 
         if (NumericEncoder.inSubset(s[i])) {
             cnt++;
         } else {
-            flg = true;
+            ret = true;
             break;
         }
     }
 
-    if (flg) {
+    if (ret) {
+        const version = this._currSymbol.version;
+
         if (1 <= version && version <= 9) {
-            flg = cnt >= 13;
+            ret = cnt >= 13;
         } else if (10 <= version && version <= 26) {
-            flg = cnt >= 15;
+            ret = cnt >= 15;
         } else if (27 <= version && version <= 40) {
-            flg = cnt >= 17;
+            ret = cnt >= 17;
         } else {
             throw new Error("Invalid operation");
-        }
-
-        if (flg) {
-            return EncodingMode.NUMERIC;
-        }
+        }        
     }
 
-    return EncodingMode.ALPHA_NUMERIC;
+    return ret;
 };
-Symbols.prototype._selectModeWhileInByteMode = function (s, startIndex) {
-    const version = this._currSymbol.version;
-    let cnt = 0;
-    let flg = false;
-
-    if (KanjiEncoder.inSubset(s[startIndex])) {
+Symbols.prototype._selectModeWhileInByte = function (s, start) {
+    if (KanjiEncoder.inSubset(s[start])) {
         return EncodingMode.KANJI;
     }
 
-    for (let i = startIndex, end = s.length; i < end; i++) {
+    if (this._mustChangeByteToNumeric(s, start)) {
+        return EncodingMode.NUMERIC;
+    }
+
+    if (this._mustChangeByteToAlphanumeric(s, start)) {
+        return EncodingMode.ALPHA_NUMERIC;
+    }
+
+    return EncodingMode.EIGHT_BIT_BYTE;
+};
+Symbols.prototype._mustChangeByteToNumeric = function (s, start) {
+    let ret = false;
+    let cnt = 0;
+    
+    for (let i = start, end = s.length; i < end; i++) {
         if (!ByteEncoder.inSubset(s[i])) {
             break;
         }
@@ -3513,33 +3567,34 @@ Symbols.prototype._selectModeWhileInByteMode = function (s, startIndex) {
         if (NumericEncoder.inSubset(s[i])) {
             cnt++;
         } else if (ByteEncoder.inExclusiveSubset(s[i])) {
-            flg = true;
+            ret = true;
             break;
         } else {
             break;
         }
     }
 
-    if (flg) {
+    if (ret) {
+        const version = this._currSymbol.version;
+
         if (1 <= version && version <= 9) {
-            flg = cnt >= 6;
+            ret = cnt >= 6;
         } else if (10 <= version && version <= 26) {
-            flg = cnt >= 8;
+            ret = cnt >= 8;
         } else if (27 <= version && version <= 40) {
-            flg = cnt >= 9;
+            ret = cnt >= 9;
         } else {
             throw new Error("Invalid operation");
         }
-
-        if (flg) {
-            return EncodingMode.NUMERIC;
-        }
     }
 
-    cnt = 0;
-    flg = false;
+    return ret;
+};
+Symbols.prototype._mustChangeByteToAlphanumeric = function (s, start) {
+    let ret = false;
+    let cnt = 0;
 
-    for (let i = startIndex, end = s.length; i < end; i++) {
+    for (let i = start, end = s.length; i < end; i++) {
         if (!ByteEncoder.inSubset(s[i])) {
             break;
         }
@@ -3547,30 +3602,28 @@ Symbols.prototype._selectModeWhileInByteMode = function (s, startIndex) {
         if (AlphanumericEncoder.inExclusiveSubset(s[i])) {
             cnt++;
         } else if (ByteEncoder.inExclusiveSubset(s[i])) {
-            flg = true;
+            ret = true;
             break;
         } else {
             break;
         }
     }
 
-    if (flg) {
+    if (ret) {
+        const version = this._currSymbol.version;
+
         if (1 <= version && version <= 9) {
-            flg = cnt >= 11;
+            ret = cnt >= 11;
         } else if (10 <= version && version <= 26) {
-            flg = cnt >= 15;
+            ret = cnt >= 15;
         } else if (27 <= version && version <= 40) {
-            flg = cnt >= 16;
+            ret = cnt >= 16;
         } else {
             throw new Error("Invalid operation");
         }
-
-        if (flg) {
-            return EncodingMode.ALPHA_NUMERIC;
-        }
     }
 
-    return EncodingMode.EIGHT_BIT_BYTE;
+    return ret;
 };
 Symbols.prototype.updateParity = function (c) {
     let charBytes;
@@ -3589,13 +3642,22 @@ Symbols.prototype.updateParity = function (c) {
 function TimingPattern() { }
 TimingPattern.place = function (moduleMatrix) {
     for (let i = 8, end = moduleMatrix.length - 9; i <= end; i++) {
-        const v = ((i % 2 == 0) ? 2 : -2);
+        const v = ((i % 2 == 0) ? Values.TIMING : -Values.TIMING);
         moduleMatrix[6][i] = v;
         moduleMatrix[i][6] = v;
     }
 };
 
 function VersionInfo() { }
+VersionInfo._versionInfoValues = [
+    -1, -1, -1, -1, -1, -1, -1,
+    0x07C94, 0x085BC, 0x09A99, 0x0A4D3, 0x0BBF6, 0x0C762, 0x0D847, 0x0E60D,
+    0x0F928, 0x10B78, 0x1145D, 0x12A17, 0x13532, 0x149A6, 0x15683, 0x168C9,
+    0x177EC, 0x18EC4, 0x191E1, 0x1AFAB, 0x1B08E, 0x1CC1A, 0x1D33F, 0x1ED75,
+    0x1F250, 0x209D5, 0x216F0, 0x228BA, 0x2379F, 0x24B0B, 0x2542E, 0x26A64,
+    0x27541, 0x28C69
+];
+
 VersionInfo.place = function (version, moduleMatrix) {
     const numModulesPerSide = moduleMatrix.length;
     const versionInfoValue = VersionInfo._versionInfoValues[version];
@@ -3603,7 +3665,7 @@ VersionInfo.place = function (version, moduleMatrix) {
     let p2 = numModulesPerSide - 11;
 
     for (let i = 0; i < 18; i++) {
-        let v = (versionInfoValue & (1 << i)) > 0 ? 3 : -3;
+        let v = (versionInfoValue & (1 << i)) > 0 ? Values.VERSION : -Values.VERSION;
         moduleMatrix[p1][p2] = v;
         moduleMatrix[p2][p1] = v;
         p2++;
@@ -3619,16 +3681,8 @@ VersionInfo.placeTempBlank = function (moduleMatrix) {
 
     for (let i = 0; i <= 5; i++) {
         for (let j = numModulesPerSide - 11, end = numModulesPerSide - 9; j <= end; j++) {
-            moduleMatrix[i][j] = -3;
-            moduleMatrix[j][i] = -3;
+            moduleMatrix[i][j] = -Values.VERSION;
+            moduleMatrix[j][i] = -Values.VERSION;
         }
     }
 };
-VersionInfo._versionInfoValues = [
-    -1, -1, -1, -1, -1, -1, -1,
-    0x07C94, 0x085BC, 0x09A99, 0x0A4D3, 0x0BBF6, 0x0C762, 0x0D847, 0x0E60D,
-    0x0F928, 0x10B78, 0x1145D, 0x12A17, 0x13532, 0x149A6, 0x15683, 0x168C9,
-    0x177EC, 0x18EC4, 0x191E1, 0x1AFAB, 0x1B08E, 0x1CC1A, 0x1D33F, 0x1ED75,
-    0x1F250, 0x209D5, 0x216F0, 0x228BA, 0x2379F, 0x24B0B, 0x2542E, 0x26A64,
-    0x27541, 0x28C69
-];
