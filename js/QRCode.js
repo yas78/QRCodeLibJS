@@ -3087,7 +3087,7 @@ Symbol.prototype.getSvg = function (moduleSize, foreRgb) {
     data = data.trim();
     let svg =
         '<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"\n' +
-        '  width="' + width + '" height="' + height + '" viewBox="0 0 ' + width + ' ' + height + '">\n' +
+        '  width="' + width + 'px" height="' + height + 'px" viewBox="0 0 ' + width + ' ' + height + '">\n' +
         '<path fill="' + foreRgb + '" stroke="' + foreRgb + '" stroke-width="1"\n' +
         '  d="' + data + '" />\n' +
         '</svg>';
