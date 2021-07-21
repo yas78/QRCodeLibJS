@@ -1432,11 +1432,8 @@ NumericEncoder.prototype.append = function (c) {
         this._codeWords[this._codeWords.length - 1] += wd;
     }
 
-    const ret = this.getCodewordBitLength(c);
-    this._bitCounter += ret;
+    this._bitCounter += this.getCodewordBitLength(c);
     this._charCounter++;
-    
-    return ret;
 };
 NumericEncoder.prototype.getCodewordBitLength = function (c) {
     if (this._charCounter % 3 == 0) {
@@ -1497,11 +1494,8 @@ AlphanumericEncoder.prototype.append = function (c) {
         this._codeWords[this._codeWords.length - 1] += wd;
     }
 
-    const ret = this.getCodewordBitLength(c);
-    this._bitCounter += ret;
+    this._bitCounter += this.getCodewordBitLength(c);
     this._charCounter++;
-    
-    return ret;
 };
 AlphanumericEncoder.prototype.getCodewordBitLength = function (c) {
     if (this._charCounter % 2 == 0) {
@@ -1592,10 +1586,9 @@ KanjiEncoder.prototype.append = function (c) {
 
     wd = ((wd >> 8) * 0xC0) + (wd & 0xFF);
     this._codeWords.push(wd);
-    this._charCounter++;
-    this._bitCounter += 13;
 
-    return 13;
+    this._bitCounter += this.getCodewordBitLength(c);
+    this._charCounter++;
 };
 KanjiEncoder.prototype.getCodewordBitLength = function (c) {
     return 13;
@@ -1655,11 +1648,8 @@ ByteEncoder.prototype.append = function (c) {
         this._codeWords.push(charBytes[i]);
     }
 
-    const ret = 8 * charBytes.length;
-    this._bitCounter += ret;
+    this._bitCounter += this.getCodewordBitLength(c);
     this._charCounter += charBytes.length;
-
-    return ret;
 };
 ByteEncoder.prototype.getCodewordBitLength = function (c) {
     const charBytes = this._charset.getBytes(c.charAt(0));
@@ -3082,7 +3072,7 @@ Symbol.prototype.getSvg = function (moduleSize, foreRgb) {
 
     const gpPaths = GraphicPath.findContours(image);
     let buf = "";
-    const indent = " ".repeat(11);
+    const indent = " ".repeat(5);
 
     for (let gpPath of gpPaths) {
         buf += (indent + "M ");
@@ -3096,12 +3086,11 @@ Symbol.prototype.getSvg = function (moduleSize, foreRgb) {
     let data = buf.toString().trim();
     data = data.trim();
     let svg =
-        "<svg xmlns=\'http://www.w3.org/2000/svg\'\n" +
-        "    width=\'" + width + "\' height=\'" + height + "\' viewBox=\'0 0 " + width + " " + height + "\'>\n" +
-        "    <path fill='" + foreRgb + "' stroke='" + foreRgb + "' stroke-width='1'\n" +
-        "        d=\'" + data + "\'\n" +
-        "    />\n" +
-        "</svg>";
+        '<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"\n' +
+        '  width="' + width + '" height="' + height + '" viewBox="0 0 ' + width + ' ' + height + '">\n' +
+        '<path fill="' + foreRgb + '" stroke="' + foreRgb + '" stroke-width="1"\n' +
+        '  d="' + data + '" />\n' +
+        '</svg>';
 
     return svg;
 };
